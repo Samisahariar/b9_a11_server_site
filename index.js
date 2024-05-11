@@ -3,11 +3,14 @@ const cors = require('cors');
 require('dotenv').config()
 const app = express();
 const port = process.env.DB_PORT || 5000;
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+    origin: ["http://localhost:5173"],
+    credentials: true
+}));
 
 
 
@@ -27,9 +30,37 @@ async function run() {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
 
-        
+        const database = client.db("a11");
+        const alljobs = database.collection("alljobs");
+        const appliedjobs = database.collection("appliedJobs");
+
+        //adding the applied jobs
+        app.post("/appliedjobs", async(req, res) =>{
+            const data = req.body;
+            const result = await appliedjobs.insertOne(data);
+            res.send(result)
+        })
 
 
+
+        //all job section
+        app.post('/addjob', async(req, res) =>{
+            const jobinfo = req.body;
+            const result = await alljobs.insertOne(jobinfo);
+            res.send(result)
+        })
+
+        app.get('/alljobs', async (req, res) =>{
+            const cursor = alljobs.find();
+            const result = await cursor.toArray();
+            res.send(result)
+        })
+        app.get('/alljobs/:id', async (req, res) =>{
+            const id = req.params.id;
+            const query = {_id : new ObjectId(id)};
+            const cursor = await alljobs.findOne(query);
+            res.send(cursor)
+        })
 
 
         // Send a ping to confirm a successful connection
