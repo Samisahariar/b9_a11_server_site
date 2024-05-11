@@ -35,29 +35,33 @@ async function run() {
         const appliedjobs = database.collection("appliedJobs");
 
         //adding the applied jobs
-        app.post("/appliedjobs", async(req, res) =>{
+        app.post("/appliedjobs", async (req, res) => {
             const data = req.body;
             const result = await appliedjobs.insertOne(data);
             res.send(result)
         })
 
-
+        //my jobs
+        app.get("/myjobs", async (req, res) => {
+            const email = req.body;
+            console.log(email)
+        })
 
         //all job section
-        app.post('/addjob', async(req, res) =>{
+        app.post('/addjob', async (req, res) => {
             const jobinfo = req.body;
             const result = await alljobs.insertOne(jobinfo);
             res.send(result)
         })
 
-        app.get('/alljobs', async (req, res) =>{
+        app.get('/alljobs', async (req, res) => {
             const cursor = alljobs.find();
             const result = await cursor.toArray();
             res.send(result)
         })
-        app.get('/alljobs/:id', async (req, res) =>{
+        app.get('/alljobs/:id', async (req, res) => {
             const id = req.params.id;
-            const query = {_id : new ObjectId(id)};
+            const query = { _id: new ObjectId(id) };
             const cursor = await alljobs.findOne(query);
             res.send(cursor)
         })
