@@ -35,16 +35,58 @@ async function run() {
         const appliedjobs = database.collection("appliedJobs");
 
         //adding the applied jobs
-        app.post("/appliedjobs", async (req, res) => {
-            const data = req.body;
-            const result = await appliedjobs.insertOne(data);
-            res.send(result)
+        app.put("/appliedjobs", async (req, res) => {
+            const data = req.body
+            const job_id = data.job_ID;
+            const email = data.email;
+            const resume = data.resume;
+            const options = {
+                projection: {
+                    photo: 1,
+                    jobtitle: 1,
+                    salary: 1,
+                    salary: 1,
+                    deadline: 1,
+                    applicantnumber: 1,
+                    description: 1,
+                    _id: 0
+                }
+            }
+            const query = { _id: new ObjectId(job_id) }
+            const cursor = await alljobs.findOne(query);
+            if (cursor.email === email) {
+                res.send({ message: "YOU ADDED THIS JOB SO YOU CANNOT APPLY!!!" })
+            } else {
+                const cursor = await alljobs.findOne(query, options);
+                cursor.applicant_email = email;
+                cursor.status = "applied";
+                console.log(cursor)
+                const result = await appliedjobs.insertOne(cursor);
+                if (result.acknowledged) {
+                    const updatedresult = await alljobs.updateOne(
+                        query,
+                        { $inc: { applicantnumber: +1 } });
+                    res.send(updatedresult)
+                }else{
+                    res.send(result)
+                }
+            }
         })
 
+        app.get("/appliedJobPage/:email" , async(req, res) =>{
+            console.log("hiii")
+            console.log(req.params.email)
+        })
+
+
+
         //my jobs
-        app.get("/myjobs", async (req, res) => {
-            const email = req.body;
-            console.log(email)
+        app.get("/myjobs/:email", async (req, res) => {
+            const email = req.params.email;
+            const query = { email: { $eq: email } };
+            const cursor = alljobs.find(query);
+            const result = await cursor.toArray();
+            res.send(result)
         })
 
         //all job section
