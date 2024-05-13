@@ -34,6 +34,16 @@ async function run() {
         const alljobs = database.collection("alljobs");
         const appliedjobs = database.collection("appliedJobs");
 
+
+        app.get("/appliedJobPage/:email", async (req, res) => {
+            const email = req.params.email;
+            const query = { applicant_email: email };
+            const cursor = appliedjobs.find(query);
+            const result = await cursor.toArray();
+            res.send(result)
+
+        })
+
         //adding the applied jobs
         app.put("/appliedjobs", async (req, res) => {
             const data = req.body
@@ -67,15 +77,16 @@ async function run() {
                         query,
                         { $inc: { applicantnumber: +1 } });
                     res.send(updatedresult)
-                }else{
+                } else {
                     res.send(result)
                 }
             }
         })
 
-        app.get("appliedJobPage/:email" , async(req, res) =>{
+        app.get("/appliedJobPage/sami", async (req, res) => {
             console.log("hiii")
             console.log(req.params.email)
+            res.send({ message: "hiii" })
         })
 
 
