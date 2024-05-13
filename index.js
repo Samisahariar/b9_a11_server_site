@@ -73,7 +73,7 @@ async function run() {
             }
         })
 
-        app.get("/appliedJobPage/:email" , async(req, res) =>{
+        app.get("appliedJobPage/:email" , async(req, res) =>{
             console.log("hiii")
             console.log(req.params.email)
         })
