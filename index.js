@@ -31,10 +31,9 @@ const client = new MongoClient(uri, {
 //middle-wares
 
 const middlewares = async (req, res, next) => {
-    console.log("hii form the middle wares")
+
     const token = req.cookies?.token;
-    console.log(token)
-    /* if (!token) {
+    if (!token) {
         return res.status(403).send({ message: 'Not authorized User!' })
     };
     jwt.verify(token, process.env.DB_SECRET_TOKEN, (err, decoded) => {
@@ -44,7 +43,7 @@ const middlewares = async (req, res, next) => {
         }
         req.user = decoded;
         next()
-    }); */
+    });
 }
 
 
@@ -61,7 +60,7 @@ async function run() {
         //token are generates here
         app.post('/jwt', async (req, res) => {
             const user = req.body;
-            const token = jwt.sign(user, process.env.DB_SECRET_TOKEN, { expiresIn: '2h' });
+            const token = jwt.sign(user, process.env.DB_SECRET_TOKEN, { expiresIn: '1h' });
             res
                 .cookie('token', token, {
                     httpOnly: true,
@@ -76,7 +75,7 @@ async function run() {
         })
 
 
-        app.get("/appliedJobPage/:email", async (req, res) => {
+        app.get("/appliedJobPage/:email", middlewares, async (req, res) => {
             const email = req.params.email;
             const query = { applicant_email: email };
             const cursor = appliedjobs.find(query);
@@ -86,7 +85,7 @@ async function run() {
         })
 
         //adding the applied jobs
-        app.put("/appliedjobs", middlewares, async (req, res) => {
+        app.put("/appliedjobs", async (req, res) => {
             const data = req.body
             const job_id = data.job_ID;
             const email = data.email;
@@ -137,7 +136,7 @@ async function run() {
             const filter = { _id: new ObjectId(id) }
             const coffe = {
                 $set: {
-                    photo : newdata.photo,
+                    photo: newdata.photo,
                     jobtitle: newdata.jobtitle,
                     username: newdata.username,
                     salary: newdata.salary,
@@ -154,12 +153,29 @@ async function run() {
 
 
         //my jobs
-        app.get("/myjobs/:email", async (req, res) => {
+        app.get("/myjobs/:email", middlewares, async (req, res) => {
             const email = req.params.email;
-            /* if (req.user.email !== email) {
+            if (req.user.email !== email) {
                 res.send({ message: "unauthorized!" })
-            } */
+            }
             const query = { email: { $eq: email } };
+            const cursor = alljobs.find(query);
+            const result = await cursor.toArray();
+            res.send(result)
+        })
+        app.put('/del/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await alljobs.deleteOne(query);
+            res.send(result)
+        });
+
+        //homesectonn tab
+        app.get('/homesection/:category', async (req, res) => {
+            const category = req.params.category;
+            const query = {
+                jobcategory: category
+            }
             const cursor = alljobs.find(query);
             const result = await cursor.toArray();
             res.send(result)
