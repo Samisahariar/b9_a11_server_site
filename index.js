@@ -2,8 +2,10 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config()
 const app = express();
+const jwt = require('jsonwebtoken');
 const port = process.env.DB_PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const cookieParser = require('cookie-parser');
 
 
 app.use(express.json());
@@ -11,6 +13,7 @@ app.use(cors({
     origin: ["http://localhost:5173"],
     credentials: true
 }));
+app.use(cookieParser());
 
 
 
@@ -25,6 +28,27 @@ const client = new MongoClient(uri, {
     }
 });
 
+//middle-wares
+
+const middlewares = async (req, res, next) => {
+    console.log("hii form the middle wares")
+    const token = req.cookies?.token;
+    console.log(token)
+    /* if (!token) {
+        return res.status(403).send({ message: 'Not authorized User!' })
+    };
+    jwt.verify(token, process.env.DB_SECRET_TOKEN, (err, decoded) => {
+        if (err) {
+            console.log(err)
+            return res.status(401).send({ message: "unauthorized User" })
+        }
+        req.user = decoded;
+        next()
+    }); */
+}
+
+
+
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
@@ -33,6 +57,23 @@ async function run() {
         const database = client.db("a11");
         const alljobs = database.collection("alljobs");
         const appliedjobs = database.collection("appliedJobs");
+
+        //token are generates here
+        app.post('/jwt', async (req, res) => {
+            const user = req.body;
+            const token = jwt.sign(user, process.env.DB_SECRET_TOKEN, { expiresIn: '2h' });
+            res
+                .cookie('token', token, {
+                    httpOnly: true,
+                    secure: false,
+                })
+                .send({ success: true })
+        });
+
+        app.post('/logout', async (req, res) => {
+            const loggedUser = req.body;
+            res.clearCookie('token', { maxAge: 0 }).send({ message: "cookie clear successful" })
+        })
 
 
         app.get("/appliedJobPage/:email", async (req, res) => {
@@ -62,7 +103,7 @@ async function run() {
                     _id: 0
                 }
             }
-            const query = { _id: new ObjectId(job_id) }
+            const query = { _id: new ObjectId(job_id) };
             const cursor = await alljobs.findOne(query);
             if (cursor.email === email) {
                 res.send({ message: "YOU ADDED THIS JOB SO YOU CANNOT APPLY!!!" })
@@ -70,7 +111,6 @@ async function run() {
                 const cursor = await alljobs.findOne(query, options);
                 cursor.applicant_email = email;
                 cursor.status = "applied";
-                console.log(cursor)
                 const result = await appliedjobs.insertOne(cursor);
                 if (result.acknowledged) {
                     const updatedresult = await alljobs.updateOne(
@@ -94,6 +134,9 @@ async function run() {
         //my jobs
         app.get("/myjobs/:email", async (req, res) => {
             const email = req.params.email;
+            /* if (req.user.email !== email) {
+                res.send({ message: "unauthorized!" })
+            } */
             const query = { email: { $eq: email } };
             const cursor = alljobs.find(query);
             const result = await cursor.toArray();
