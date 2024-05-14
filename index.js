@@ -86,7 +86,7 @@ async function run() {
         })
 
         //adding the applied jobs
-        app.put("/appliedjobs", async (req, res) => {
+        app.put("/appliedjobs", middlewares, async (req, res) => {
             const data = req.body
             const job_id = data.job_ID;
             const email = data.email;
@@ -129,6 +129,28 @@ async function run() {
             res.send({ message: "hiii" })
         })
 
+
+        app.put("/updatepage/:id", async (req, res) => {
+            const id = req.params.id;
+            const newdata = req.body;
+            const options = { upsert: true };
+            const filter = { _id: new ObjectId(id) }
+            const coffe = {
+                $set: {
+                    photo : newdata.photo,
+                    jobtitle: newdata.jobtitle,
+                    username: newdata.username,
+                    salary: newdata.salary,
+                    jobpostingdate: newdata.jobpostingdate,
+                    jobcategory: newdata.jobcategory,
+                    deadline: newdata.deadline,
+                    applicantnumber: newdata.applicantnumber,
+                    description: newdata.description,
+                },
+            };
+            const result = await alljobs.updateOne(filter, coffe, options);
+            res.send(result)
+        })
 
 
         //my jobs
