@@ -31,7 +31,6 @@ const client = new MongoClient(uri, {
 //middle-wares
 
 const middlewares = async (req, res, next) => {
-
     const token = req.cookies?.token;
     if (!token) {
         return res.status(403).send({ message: 'Not authorized User!' })
@@ -72,10 +71,7 @@ async function run() {
                 .send({ success: true })
         });
 
-        app.post('/logout', async (req, res) => {
-            const loggedUser = req.body;
-            res.clearCookie('token', { ...cookieOptions, maxAge: 0 }).send({ message: "cookie clear successful" })
-        })
+        
 
 
         app.get("/appliedJobPage/:email", middlewares, async (req, res) => {
